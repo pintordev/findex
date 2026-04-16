@@ -1,5 +1,6 @@
 package com.sprint.mission.findex.domain.indexinfo.controller;
 
+import com.sprint.mission.findex.domain.indexinfo.controller.api.IndexInfoApi;
 import com.sprint.mission.findex.domain.indexinfo.dto.IndexInfoCreateRequest;
 import com.sprint.mission.findex.domain.indexinfo.dto.IndexInfoResponse;
 import com.sprint.mission.findex.domain.indexinfo.dto.IndexInfoUpdateRequest;
@@ -22,7 +23,7 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 @RequestMapping("/api/index-infos")
 @RequiredArgsConstructor
 @RestController
-public class IndexInfoController {
+public class IndexInfoController implements IndexInfoApi {
 
   private final IndexInfoService indexInfoService;
 
