@@ -48,7 +48,7 @@ public class IndexInfoController {
         .body(res);
   }
 
-  @DeleteMapping(path = "{id")
+  @DeleteMapping(path = "{id}")
   public ResponseEntity<Void> delete(@PathVariable UUID id) {
     indexInfoService.delete(id);
     return ResponseEntity.status(HttpStatus.NO_CONTENT)
