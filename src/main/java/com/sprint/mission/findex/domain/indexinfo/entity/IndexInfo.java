@@ -8,6 +8,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,7 +31,7 @@ public class IndexInfo extends BaseUpdatableEntity {
   private Integer employedItemsCount;
 
   @Column(name = "base_point_in_time", nullable = false, length = 50)
-  private String basePointInTime;
+  private LocalDate basePointInTime;
 
   @Column(name = "base_index", nullable = false, precision = 20, scale = 4)
   private BigDecimal baseIndex;
@@ -38,11 +39,6 @@ public class IndexInfo extends BaseUpdatableEntity {
   @Enumerated(EnumType.STRING)
   @Column(name = "source_type", nullable = false, length = 10)
   private SourceType sourceType;
-
-  public enum SourceType {
-    USER,
-    OPEN_API
-  }
 
   @Column(name = "favorite", nullable = false)
   private Boolean favorite = false;
