@@ -44,7 +44,7 @@ public class IndexInfo extends BaseUpdatableEntity {
   private Boolean favorite = false;
 
   public IndexInfo(String indexClassification, String indexName, Integer employedItemsCount,
-      String basePointInTime, BigDecimal baseIndex, SourceType sourceType, Boolean favorite) {
+      LocalDate basePointInTime, BigDecimal baseIndex, SourceType sourceType, Boolean favorite) {
     this.indexClassification = indexClassification;
     this.indexName = indexName;
     this.employedItemsCount = employedItemsCount;
