@@ -15,6 +15,7 @@ import com.sprint.mission.findex.domain.indexinfo.repository.IndexInfoRepository
 import com.sprint.mission.findex.global.exception.ApiException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,7 +83,11 @@ public class IndexInfoService {
         sourceType,
         req.favorite()
     );
-    indexInfoRepository.save(indexInfo);
+    try {
+      indexInfoRepository.save(indexInfo);
+    } catch (DataIntegrityViolationException e) {
+      throw new ApiException(INDEX_INFO_DUPLICATED);
+    }
     autoSyncConfigRepository.save(new AutoSyncConfig(indexInfo));
     return indexInfo;
   }
