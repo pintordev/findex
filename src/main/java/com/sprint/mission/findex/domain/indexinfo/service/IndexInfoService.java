@@ -41,8 +41,7 @@ public class IndexInfoService {
 
   @Transactional
   public IndexInfoResponse updateByUser(UUID id, IndexInfoUpdateRequest req) {
-    IndexInfo indexInfo = indexInfoRepository.findById(id)
-        .orElseThrow(() -> new ApiException(INDEX_INFO_NOT_FOUND));
+    IndexInfo indexInfo = findByIdOrThrow(id);
     indexInfo.update(
         req.employedItemsCount(),
         req.basePointInTime(),
@@ -63,6 +62,12 @@ public class IndexInfoService {
     return indexInfo;
   }
 
+  @Transactional
+  public void delete(UUID id) {
+    IndexInfo indexInfo = findByIdOrThrow(id);
+    indexInfoRepository.delete(indexInfo);
+  }
+
   private IndexInfo create(IndexInfoCreateRequest req, SourceType sourceType) {
     if (indexInfoRepository.existsByIndexClassificationAndIndexName(
         req.indexClassification(), req.indexName())) {
@@ -80,5 +85,10 @@ public class IndexInfoService {
     indexInfoRepository.save(indexInfo);
     autoSyncConfigRepository.save(new AutoSyncConfig(indexInfo));
     return indexInfo;
+  }
+
+  private IndexInfo findByIdOrThrow(UUID id) {
+    return indexInfoRepository.findById(id)
+        .orElseThrow(() -> new ApiException(INDEX_INFO_NOT_FOUND));
   }
 }
