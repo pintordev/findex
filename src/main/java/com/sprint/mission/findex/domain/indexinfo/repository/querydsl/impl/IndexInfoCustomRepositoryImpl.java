@@ -102,7 +102,7 @@ public class IndexInfoCustomRepositoryImpl implements IndexInfoCustomRepository 
   private BooleanExpression cursorCondition(IndexInfoQueryCondition condition) {
     String cursor = condition.cursor();
     UUID idAfter = condition.idAfter();
-    boolean isAsc = "asc".equalsIgnoreCase(condition.sortDirection());
+    boolean isAsc = !"desc".equalsIgnoreCase(condition.sortDirection());
     if (cursor == null) {
       return null;
     }
