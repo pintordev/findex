@@ -15,6 +15,7 @@ import com.sprint.mission.findex.domain.indexinfo.dto.IndexInfoResponse;
 import com.sprint.mission.findex.domain.indexinfo.repository.querydsl.IndexInfoCustomRepository;
 import com.sprint.mission.findex.global.common.dto.CursorPageResponse;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -53,15 +54,17 @@ public class IndexInfoCustomRepositoryImpl implements IndexInfoCustomRepository 
         .limit(condition.size() + 1)
         .fetch();
 
-    long totalElements = queryFactory
-        .select(indexInfo.count())
-        .from(indexInfo)
-        .where(
-            likeIndexClassification(condition.indexClassification()),
-            likeIndexName(condition.indexName()),
-            eqFavorite(condition.favorite())
-        )
-        .fetchOne();
+    long totalElements = Optional.ofNullable(
+        queryFactory
+            .select(indexInfo.count())
+            .from(indexInfo)
+            .where(
+                likeIndexClassification(condition.indexClassification()),
+                likeIndexName(condition.indexName()),
+                eqFavorite(condition.favorite())
+            )
+            .fetchOne()
+    ).orElse(0L);
 
     boolean hasNext = content.size() > condition.size();
     String nextCursor = null;
