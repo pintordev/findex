@@ -2,6 +2,7 @@ package com.sprint.mission.findex.domain.indexinfo.dto;
 
 import ch.qos.logback.core.util.StringUtil;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.util.UUID;
@@ -51,4 +52,21 @@ public record IndexInfoQueryCondition(
         }
   }
 
+  @AssertTrue(message = "cursor와 idAfter는 함께 전달되어야 합니다")
+  public boolean isCursorAndIdAfterConsistent() {
+    return (cursor == null) == (idAfter == null);
+  }
+
+  @AssertTrue(message = "employedItemsCount 정렬 시 cursor는 정수 형식이어야 합니다")
+  public boolean isCursorValidForSortField() {
+    if (!"employedItemsCount".equals(sortField) || cursor == null) {
+      return true;
+    }
+    try {
+      Integer.valueOf(cursor);
+      return true;
+    } catch (NumberFormatException e) {
+      return false;
+    }
+  }
 }
