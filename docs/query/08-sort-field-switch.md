@@ -9,10 +9,9 @@ Repository 구현체에서 switch로 정렬/커서 조건을 직접 분기하는
 
 ```java
 // IndexInfoCustomRepositoryImpl.java
+import static com.sprint.mission.findex.domain.indexinfo.entity.QIndexInfo.indexInfo;
 
 public CursorPageResponse<IndexInfoResponse> findAll(IndexInfoSearchCond cond) {
-    import static com.sprint.mission.findex.domain.indexinfo.entity.QIndexInfo.indexInfo;
-
     boolean asc = "asc".equalsIgnoreCase(cond.sortDirection());
 
     List<IndexInfoResponse> content = queryFactory

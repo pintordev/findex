@@ -76,10 +76,10 @@ UUID nextIdAfter = hasNext ? last.getId() : null;
 String nextCursor = hasNext ? last.getBaseDate().toString() : null;
 ```
 
-`CursorPageMapper`를 통해 `CursorPageResponse`로 변환:
+`CursorPageResponse` 직접 생성:
 
 ```java
-return cursorPageMapper.fromSlice(slice, item -> item.getId());
+return new CursorPageResponse<>(content, nextCursor, nextIdAfter, size, null, hasNext);
 ```
 
 ---
