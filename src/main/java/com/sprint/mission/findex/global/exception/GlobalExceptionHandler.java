@@ -71,7 +71,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleException(Exception e) {
     ERROR error = COMMON_UNEXPECTED_ERROR;
     log.error("[UnexpectedException] cause: {}, message: {}", e.getClass().getSimpleName(),
-        e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
+        e.getCause() != null ? e.getCause().getMessage() : e.getMessage(), e);
     return ResponseEntity
         .status(error.getHttpStatus())
         .body(ErrorResponse.of(
