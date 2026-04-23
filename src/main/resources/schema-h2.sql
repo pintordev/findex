@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS index_info (
     UNIQUE (index_classification, index_name)
 );
 
--- IndexInfo: 즐겨찾기 필터링 최적화 (Partial Index)
+-- IndexInfo: 즐겨찾기 필터링 최적화 (H2는 Partial Index 미지원으로 일반 인덱스 사용)
 CREATE INDEX IF NOT EXISTS idx_index_info_favorite_true
     ON index_info (favorite);
 
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS sync_job (
     FOREIGN KEY (index_info_id) REFERENCES index_info (id) ON DELETE CASCADE
 );
 
--- SyncJob: 최신 작업 성공 이력 조회 최적화 (Partial Index)
+-- SyncJob: 최신 작업 성공 이력 조회 최적화 (H2는 Partial Index 미지원으로 일반 인덱스 사용)
 CREATE INDEX IF NOT EXISTS idx_sync_job_last_success
     ON sync_job (index_info_id, job_type, target_date DESC);
 

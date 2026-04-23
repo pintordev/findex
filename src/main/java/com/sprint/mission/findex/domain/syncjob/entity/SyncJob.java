@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
     name = "sync_job",
+    // PostgreSQL에서는 부분 인덱스로 생성: WHERE (result = 'SUCCESS')
     indexes = @Index(name = "idx_sync_job_last_success", columnList = "index_info_id, job_type, target_date DESC")
 )
 public class SyncJob extends BaseEntity {
