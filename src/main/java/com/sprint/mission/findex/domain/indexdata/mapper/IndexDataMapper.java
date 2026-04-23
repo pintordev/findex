@@ -32,6 +32,7 @@ public interface IndexDataMapper {
   default List<IndexData> toEntityList(List<IndexDataApiResponse> dtoList, IndexInfo indexInfo) {
     if (dtoList == null) return null;
     return dtoList.stream()
+        .filter(res -> res.idxCsf().equals(indexInfo.getIndexClassification()))
         .map(dto -> toEntity(dto, indexInfo))
         .toList();
   }
