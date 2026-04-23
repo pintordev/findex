@@ -6,17 +6,16 @@ import com.sprint.mission.findex.domain.dashboard.dto.RankedIndexPerformanceQuer
 import com.sprint.mission.findex.domain.dashboard.dto.RankedIndexPerformanceResponse;
 import com.sprint.mission.findex.domain.indexdata.entity.IndexData;
 import com.sprint.mission.findex.domain.indexdata.repository.IndexDataRepository;
-import com.sprint.mission.findex.domain.indexinfo.entity.IndexInfo;
-import com.sprint.mission.findex.domain.indexinfo.repository.IndexInfoRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,133 +23,72 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
-public class DashboardPerformanceRankService {
+public class DashboardService {
 
   private final IndexDataRepository indexDataRepository;
 
   public List<RankedIndexPerformanceResponse> getIndexPerformanceRank(
       RankedIndexPerformanceQueryCondition condition) {
-    List<IndexInfo> targetIndexInfos = getTargetIndexInfos(indexInfoId);
 
-    List<IndexPerformanceResponse> performances = targetIndexInfos.stream()
-        .map(indexInfo -> toIndexPerformance(indexInfo, periodType))
+    Map<UUID, List<IndexData>> groupedData = indexDataRepository.findPerformanceData(condition)
+        .stream()
+        .collect(Collectors.groupingBy(d -> d.getIndexInfo().getId()));
+
+    List<IndexPerformanceResponse> performances = groupedData.values().stream()
+        .map(list -> calculatePerformance(list, condition.periodType()))
         .filter(Objects::nonNull)
-        .sorted(
-            Comparator.comparing(
-                IndexPerformanceResponse::fluctuationRate,
-                Comparator.nullsLast(BigDecimal::compareTo)
-            ).reversed()
-        )
+        .sorted(Comparator.comparing(IndexPerformanceResponse::fluctuationRate).reversed())
         .toList();
 
-    return assignRanks(performances).stream()
-        .limit(safeLimit)
-        .toList();
+    return assignRanks(performances, condition.limit());
   }
 
-  private List<IndexInfo> getTargetIndexInfos(UUID indexInfoId) {
-    if (indexInfoId == null) {
-      return indexInfoRepository.findAll();
-    }
-
-    return indexInfoRepository.findById(indexInfoId)
-        .map(List::of)
-        .orElseGet(List::of);
-  }
-
-  private IndexPerformanceResponse toIndexPerformance(
-      IndexInfo indexInfo,
-      IndexPerformancePeriodType periodType
-  ) {
-    IndexData currentData = indexDataRepository
-        .findFirstByIndexInfoIdOrderByBaseDateDesc(indexInfo.getId())
-        .orElse(null);
-
-    if (currentData == null) {
+  private IndexPerformanceResponse calculatePerformance(List<IndexData> list,
+      IndexPerformancePeriodType type) {
+    if (list.size() < 2) {
       return null;
     }
 
-    LocalDate targetDate = getTargetDate(currentData.getBaseDate(), periodType);
-
-    IndexData beforeData = indexDataRepository
-        .findFirstByIndexInfoIdAndBaseDateLessThanEqualOrderByBaseDateDesc(
-            indexInfo.getId(),
-            targetDate
-        )
-        .orElse(null);
-    if (beforeData == null) {
-      return null;
-    }
-
-    BigDecimal currentPrice = currentData.getClosingPrice();
-    BigDecimal beforePrice = beforeData.getClosingPrice();
-    BigDecimal versus = currentPrice.subtract(beforePrice);
-    BigDecimal fluctuationRate = calculateFluctuationRate(currentPrice, beforePrice);
-
-    return new IndexPerformanceResponse(
-        indexInfo.getId(),
-        indexInfo.getIndexClassification(),
-        indexInfo.getIndexName(),
-        versus,
-        fluctuationRate,
-        currentPrice,
-        beforePrice
-    );
-  }
-
-  private LocalDate getTargetDate(
-      LocalDate currentDate,
-      IndexPerformancePeriodType periodType
-  ) {
-    return switch (periodType) {
-      case DAILY -> currentDate.minusDays(1);
-      case WEEKLY -> currentDate.minusWeeks(1);
-      case MONTHLY -> currentDate.minusMonths(1);
+    IndexData current = list.get(0);
+    LocalDate targetDate = switch (type) {
+      case DAILY -> current.getBaseDate().minusDays(1);
+      case WEEKLY -> current.getBaseDate().minusWeeks(1);
+      case MONTHLY -> current.getBaseDate().minusMonths(1);
     };
-  }
 
-  private IndexData findClosestBeforeOrEqual(
-      List<IndexData> sorted,
-      LocalDate targetDate
-  ) {
-    for (IndexData indexData : sorted) {
-      if (!indexData.getBaseDate().isAfter(targetDate)) {
-        return indexData;
-      }
-    }
-    return null;
-  }
+    return list.stream()
+        .filter(d -> !d.getBaseDate().isAfter(targetDate))
+        .findFirst()
+        .map(before -> {
+          BigDecimal currentPrice = current.getClosingPrice();
+          BigDecimal beforePrice = before.getClosingPrice();
 
-  private BigDecimal calculateFluctuationRate(
-      BigDecimal currentPrice,
-      BigDecimal beforePrice
-  ) {
-    if (currentPrice == null || beforePrice == null) {
-      return null;
-    }
+          if (beforePrice.compareTo(BigDecimal.ZERO) == 0) {
+            return null;
+          }
 
-    if (BigDecimal.ZERO.compareTo(beforePrice) == 0) {
-      return null;
-    }
+          BigDecimal fluctuationRate = currentPrice.subtract(beforePrice)
+              .divide(beforePrice, 8, RoundingMode.HALF_UP)
+              .multiply(BigDecimal.valueOf(100))
+              .setScale(4, RoundingMode.HALF_UP);
 
-    return currentPrice.subtract(beforePrice)
-        .divide(beforePrice, 6, RoundingMode.HALF_UP)
-        .multiply(BigDecimal.valueOf(100))
-        .setScale(4, RoundingMode.HALF_UP);
+          return new IndexPerformanceResponse(
+              current.getIndexInfo().getId(),
+              current.getIndexInfo().getIndexClassification(),
+              current.getIndexInfo().getIndexName(),
+              currentPrice.subtract(beforePrice),
+              fluctuationRate,
+              currentPrice,
+              beforePrice
+          );
+        })
+        .orElse(null);
   }
 
   private List<RankedIndexPerformanceResponse> assignRanks(
-      List<IndexPerformanceResponse> performances
-  ) {
-    List<RankedIndexPerformanceResponse> result = new ArrayList<>();
-
-    for (int i = 0; i < performances.size(); i++) {
-      result.add(new RankedIndexPerformanceResponse(
-          performances.get(i),
-          i + 1
-      ));
-    }
-
-    return result;
+      List<IndexPerformanceResponse> performances, Integer limit) {
+    return IntStream.range(0, Math.min(performances.size(), limit))
+        .mapToObj(i -> new RankedIndexPerformanceResponse(performances.get(i), i + 1))
+        .toList();
   }
 }
