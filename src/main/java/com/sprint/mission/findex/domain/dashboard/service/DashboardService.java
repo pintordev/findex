@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,12 +33,19 @@ public class DashboardService {
 
     Map<UUID, List<IndexData>> groupedData = indexDataRepository.findPerformanceData(condition)
         .stream()
-        .collect(Collectors.groupingBy(d -> d.getIndexInfo().getId()));
+        .collect(Collectors.groupingBy(
+            d -> d.getIndexInfo().getId(),
+            LinkedHashMap::new,
+            Collectors.toList()
+        ));
 
     List<IndexPerformanceResponse> performances = groupedData.values().stream()
         .map(list -> calculatePerformance(list, condition.periodType()))
         .filter(Objects::nonNull)
-        .sorted(Comparator.comparing(IndexPerformanceResponse::fluctuationRate).reversed())
+        .sorted(
+            Comparator.comparing(IndexPerformanceResponse::fluctuationRate).reversed()
+                .thenComparing(IndexPerformanceResponse::indexName)
+        )
         .toList();
 
     return assignRanks(performances, condition.limit());
