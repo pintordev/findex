@@ -16,6 +16,7 @@ public class ApiException extends RuntimeException {
     // IndexData
     INDEX_DATA_NOT_FOUND("INDEX_DATA_001", "지수 데이터를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     INDEX_DATA_DUPLICATED("INDEX_DATA_002", "이미 존재하는 지수 데이터입니다.", HttpStatus.CONFLICT),
+    INDEX_DATA_CSV_EXPORT_FAILED("INDEX_DATA_003", "CSV Export에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // SyncJob
     SYNC_JOB_NOT_FOUND("SYNC_001", "연동 작업을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -23,10 +24,16 @@ public class ApiException extends RuntimeException {
 
     // AutoSyncConfig
     AUTO_SYNC_CONFIG_NOT_FOUND("AUTO_SYNC_001", "자동 연동 설정을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    INVALID_SORT_FIELD("AUTO_SYNC_002", "유효하지 않은 정렬 필드입니다.", HttpStatus.BAD_REQUEST),
 
     // Common
-    COMMON_INVALID_REQUEST("COMMON_001", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
-    COMMON_UNEXPECTED_ERROR("COMMON_002", "예기치 않은 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+    COMMON_UNEXPECTED_ERROR("COMMON_001", "예기치 않은 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    COMMON_NOT_FOUND("COMMON_002", "요청한 리소스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    COMMON_METHOD_NOT_ALLOWED("COMMON_003", "지원하지 않는 HTTP 메서드입니다.", HttpStatus.METHOD_NOT_ALLOWED),
+    COMMON_MESSAGE_NOT_READABLE("COMMON_004", "잘못된 요청 형식입니다.", HttpStatus.BAD_REQUEST),
+    COMMON_INVALID_REQUEST("COMMON_005", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST);
+
+
 
     private final String code;
     private final String message;
@@ -53,6 +60,11 @@ public class ApiException extends RuntimeException {
 
   public ApiException(ERROR error) {
     super(error.getMessage());
+    this.error = error;
+  }
+
+  public ApiException(ERROR error, Throwable cause) {
+    super(error.getMessage(), cause);
     this.error = error;
   }
 

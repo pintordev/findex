@@ -1,0 +1,99 @@
+package com.sprint.mission.findex.domain.syncjob.dto;
+
+import com.sprint.mission.findex.domain.syncjob.entity.JobResult;
+import com.sprint.mission.findex.domain.syncjob.entity.JobType;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import java.time.LocalDate;
+import java.util.UUID;
+import org.springframework.format.annotation.DateTimeFormat;
+
+@Schema(description = "연동 이력 검색 필터")
+public record SyncJobQueryCondition(
+
+    @Schema(description = "연동 작업 유형 (INDEX_INFO, INDEX_DATA)")
+    JobType jobType,
+
+    @Schema(description = "지수 정보 ID")
+    UUID indexInfoId,
+
+    @Schema(description = "대상 날짜 (부터)", example = "2024-04-01")
+    LocalDate baseDateFrom,
+
+    @Schema(description = "대상 날짜 (까지)", example = "2024-04-10")
+    LocalDate baseDateTo,
+
+    @Schema(description = "작업자")
+    String worker,
+
+    @Schema(description = "작업 일시 (부터)", example = "2026-04-01T00:00:00")
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    LocalDate jobTimeFrom,
+
+    @Schema(description = "작업 일시 (까지)", example = "2026-04-10T23:59:59")
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    LocalDate jobTimeTo,
+
+    @Schema(description = "작업 상태 (SUCCESS, FAILED)")
+    JobResult status,
+
+    @Schema(description = "이전 페이지 마지막 ID (tiebreaker)")
+    UUID idAfter,
+
+    @Schema(description = "커서 값 (정렬 필드 기준 마지막 값)")
+    String cursor,
+
+    @Schema(description = "정렬 필드 (targetDate, jobTime)", example = "jobTime")
+    String sortField,
+
+    @Schema(description = "정렬 방향 (asc, desc)", example = "desc")
+    String sortDirection,
+
+    @Min(1) @Max(100)
+    @Schema(description = "페이지 크기", example = "10")
+    Integer size
+
+) {
+
+  public SyncJobQueryCondition {
+    if (sortField == null || sortField.isBlank()) {
+      sortField = "jobTime";
+    }
+    if (sortDirection == null || sortDirection.isBlank()) {
+      sortDirection = "desc";
+    }
+    if (size == null) {
+      size = 10;
+    }
+  }
+
+  @AssertTrue(message = "대상 날짜(부터)는 대상 날짜(까지)보다 미래일 수 없습니다.")
+  public boolean isBaseDateRangeValid() {
+    return baseDateFrom == null || baseDateTo == null || !baseDateFrom.isAfter(baseDateTo);
+  }
+
+  @AssertTrue(message = "작업 일시(부터)는 작업 일시(까지)보다 미래일 수 없습니다.")
+  public boolean isJobTimeRangeValid() {
+    return jobTimeFrom == null || jobTimeTo == null || !jobTimeFrom.isAfter(jobTimeTo);
+  }
+
+  @AssertTrue(message = "cursor와 idAfter는 함께 전달되어야 합니다")
+  public boolean isCursorAndIdAfterConsistent() {
+    return (cursor == null) == (idAfter == null);
+  }
+
+  @AssertTrue(message = "targetDate 정렬 시 cursor는 yyyy-MM-dd 형식이어야 합니다")
+  public boolean isCursorValidForSortField() {
+    if (!"targetDate".equals(sortField) || cursor == null) {
+      return true;
+    }
+    try {
+      java.time.LocalDate.parse(cursor);
+      return true;
+    } catch (java.time.format.DateTimeParseException e) {
+      return false;
+    }
+  }
+}
