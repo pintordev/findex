@@ -40,9 +40,10 @@ public class IndexDataService {
   private final IndexDataMapper indexDataMapper;
 
   @Caching(evict = {
+      @CacheEvict(cacheNames = "favoritePerformance", allEntries = true),
       @CacheEvict(cacheNames = "indexChart", allEntries = true),
-      @CacheEvict(cacheNames = "favoritePerformance", allEntries = true)
-  })
+      @CacheEvict(cacheNames = "performanceRank", allEntries = true)
+})
   @Transactional
   public IndexDataResponse create(IndexDataCreateRequest request) {
     IndexInfo indexInfo = indexInfoRepository.findById(request.indexInfoId())
@@ -75,8 +76,9 @@ public class IndexDataService {
   }
 
   @Caching(evict = {
+      @CacheEvict(cacheNames = "favoritePerformance", allEntries = true),
       @CacheEvict(cacheNames = "indexChart", allEntries = true),
-      @CacheEvict(cacheNames = "favoritePerformance", allEntries = true)
+      @CacheEvict(cacheNames = "performanceRank", allEntries = true)
   })
   @Transactional
   public IndexDataResponse update(UUID id, IndexDataUpdateRequest request) {
@@ -99,8 +101,9 @@ public class IndexDataService {
   }
 
   @Caching(evict = {
+      @CacheEvict(cacheNames = "favoritePerformance", allEntries = true),
       @CacheEvict(cacheNames = "indexChart", allEntries = true),
-      @CacheEvict(cacheNames = "favoritePerformance", allEntries = true)
+      @CacheEvict(cacheNames = "performanceRank", allEntries = true)
   })
   @Transactional
   public void delete(UUID id) {

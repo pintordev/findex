@@ -28,6 +28,7 @@ public class DashboardService {
 
   private final IndexDataRepository indexDataRepository;
 
+  @Cacheable(cacheNames = "performanceRank", key = "#condition.periodType + '_' + #condition.limit + '_' + #condition.indexInfoId")
   public List<RankedIndexPerformanceResponse> getIndexPerformanceRank(
       RankedIndexPerformanceQueryCondition condition) {
 
