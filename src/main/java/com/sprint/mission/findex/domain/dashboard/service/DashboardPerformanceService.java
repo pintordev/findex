@@ -33,6 +33,7 @@ public class DashboardPerformanceService {
     private final IndexInfoRepository indexInfoRepository;
     private final IndexDataRepository indexDataRepository;
 
+    @Cacheable(cacheNames = "favoritePerformance", key = "#periodType")
     public List<IndexPerformanceResponse> getFavoriteIndexPerformance(
             IndexPerformancePeriodType periodType
     ) {
